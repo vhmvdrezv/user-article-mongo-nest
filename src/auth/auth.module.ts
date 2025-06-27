@@ -5,15 +5,20 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategies/google.strategy ';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-    JwtModule.register({
-      privateKey: '1',
-      signOptions: {
-        expiresIn: '24h'
-      }
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '24h'
+        }
+      }),
+      inject: [ConfigService]
     }),
   ],
   controllers: [AuthController],

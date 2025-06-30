@@ -30,7 +30,7 @@ export class AuthService {
             user = await this.userModel.create({
                 email,
                 googleId,
-                fullname: firstName.concat(lastName),
+                fullname: firstName.concat(` ${lastName}`),
                 role
             });
         }

@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticlesService } from './articles.service';
 import { updateArticleDto } from './dto/update-article.dto';
+import { getArticlesDto } from './dto/get-articles.dto';
 
 @Controller('articles')
 export class ArticlesController {
@@ -17,8 +18,10 @@ export class ArticlesController {
     }
 
     @Get()
-    async getAllArticles() {
-        return this.articlesService.getAllArticles();
+    async getAllArticles(
+        @Query() getArticlesDto: getArticlesDto
+    ) {
+        return this.articlesService.getAllArticles(getArticlesDto);
     }
 
     @Get(':id')

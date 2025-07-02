@@ -33,9 +33,10 @@ export class ArticlesService {
     async getAllArticles(
         getArticlesDto: getArticlesDto
     ) {
-        const { page = 1, limit = 5, search } = getArticlesDto;
+        const { page = 1, limit = 5, search, authorId } = getArticlesDto;
 
         const query: any = { };
+        if (authorId) query.author = authorId;
         if (search) query.title = new RegExp(search, 'i');
 
         const articles = await this.articleModel

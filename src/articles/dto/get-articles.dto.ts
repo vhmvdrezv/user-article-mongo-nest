@@ -8,6 +8,10 @@ export class getArticlesDto {
     search?: string;
 
     @IsOptional()
+    @IsNotEmpty()
+    authorId?: string;
+
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)

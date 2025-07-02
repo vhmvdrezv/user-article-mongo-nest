@@ -6,10 +6,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { updateArticleDto } from './dto/update-article.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { getArticlesDto } from './dto/get-articles.dto';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class ArticlesService {
     constructor(
+        @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
         @InjectModel(Article.name) private readonly articleModel: Model<ArticleDocument>
     ) { }
     async createArticle(createArticleDto: CreateArticleDto, userId: string) {
@@ -31,10 +33,13 @@ export class ArticlesService {
     async getAllArticles(
         getArticlesDto: getArticlesDto
     ) {
-        const { page = 1, limit = 5 } = getArticlesDto;
+        const { page = 1, limit = 5, search } = getArticlesDto;
+
+        const query: any = { };
+        if (search) query.title = new RegExp(search, 'i');
 
         const articles = await this.articleModel
-                                    .find()
+                                    .find(query)
                                     .populate('author', 'fullname email')
                                     .select('-__v')
                                     .skip((page - 1) * limit)
@@ -42,7 +47,7 @@ export class ArticlesService {
                                     .exec();
 
         const total = await this.articleModel
-                                    .countDocuments()
+                                    .countDocuments(query)
                                     .exec();
         
         const totalPages = Math.ceil(total / limit);
@@ -58,6 +63,43 @@ export class ArticlesService {
             hasNext,
             hasPrev
         }
+    }
+
+    async getMyArticles(getArticlesDto: getArticlesDto, userId: string) {
+        const user = await this.userModel.findById(userId);
+        if (!user) throw new NotFoundException('User not found');
+
+        const { page = 1, limit = 5, search } = getArticlesDto;
+
+        const query: any = { 
+            author: userId
+        };
+        if (search) query.title = RegExp(search, 'i');
+
+        const articles = await this.articleModel
+                                    .find(query)
+                                    .skip((page - 1) * limit)
+                                    .limit(limit)
+                                    .sort({ createdAt: -1 })
+                                    .exec();
+
+        const total = await this.articleModel
+                                    .countDocuments(query)
+                                    .exec();
+        
+        const totalPages = Math.ceil(total / limit);
+        const hasNext = page < totalPages;
+        const hasPrev = page > 1;
+
+        return {
+            status:'success',
+            message: 'artilces retireved succussfully',
+            data: articles,
+            total,
+            totalPages,
+            hasNext,
+            hasPrev
+        }                            
     }
 
     async getArticleById(id: string) {

@@ -24,6 +24,15 @@ export class ArticlesController {
         return this.articlesService.getAllArticles(getArticlesDto);
     }
 
+    @UseGuards(AuthGuard('jwt'))
+    @Get('me')
+    async getMyArticles(
+        @Query() getArticlesDto: getArticlesDto,
+        @Req() req: any
+    ) {
+        return this.articlesService.getMyArticles(getArticlesDto, req.user.userId);
+    }
+    
     @Get(':id')
     async getArticleById(@Param('id') id: string){
         return this.articlesService.getArticleById(id);

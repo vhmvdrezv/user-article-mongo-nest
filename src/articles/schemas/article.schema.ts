@@ -5,13 +5,13 @@ export type ArticleDocument = Article & Document;
 
 @Schema({ timestamps: true })
 export class Article {
-    @Prop({ required: true })
+    @Prop({ required: true, index: true })
     title: string;
 
     @Prop({ required: true })
     content: string;
 
-    @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+    @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
     author: Types.ObjectId;
 }
 

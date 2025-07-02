@@ -1,7 +1,12 @@
 import { Type } from "class-transformer";
-import { IsIn, IsInt, IsOptional, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsNotEmpty, IsOptional, Max, MaxLength, Min } from "class-validator";
 
 export class getArticlesDto {
+    @IsOptional()
+    @IsNotEmpty()
+    @MaxLength(30)
+    search?: string;
+
     @IsOptional()
     @Type(() => Number)
     @IsInt()

@@ -7,6 +7,9 @@ import { updateArticleDto } from './dto/update-article.dto';
 import { Role } from 'src/common/enums/role.enum';
 import { getArticlesDto } from './dto/get-articles.dto';
 import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { SuccessResponse } from 'src/common/interfaces/success-response.interface';
+import { ResponseUtil } from 'src/common/utils/response.util';
+import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interfact';
 
 @Injectable()
 export class ArticlesService {
@@ -14,7 +17,7 @@ export class ArticlesService {
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
         @InjectModel(Article.name) private readonly articleModel: Model<ArticleDocument>
     ) { }
-    async createArticle(createArticleDto: CreateArticleDto, userId: string) {
+    async createArticle(createArticleDto: CreateArticleDto, userId: string): Promise<SuccessResponse<ArticleDocument>> {
         const { title, content } = createArticleDto;
 
         const newArticle = await this.articleModel.create({
@@ -23,16 +26,12 @@ export class ArticlesService {
             author: userId
         })
 
-        return {
-            status: 'success',
-            message: 'article created successfully',
-            data: newArticle
-        }
+        return ResponseUtil.created(newArticle, 'Article created successfully');
     }
 
     async getAllArticles(
         getArticlesDto: getArticlesDto
-    ) {
+    ): Promise<PaginatedResponse<Article>> {
         const { page = 1, limit = 5, search, authorId } = getArticlesDto;
 
         const query: any = { };
@@ -55,18 +54,17 @@ export class ArticlesService {
         const hasNext = page < totalPages;
         const hasPrev = page > 1;
 
-        return {
-            status:'success',
-            message: 'artilces retireved succussfully',
-            data: articles,
+        return ResponseUtil.paginated(articles, {
             total,
             totalPages,
+            currentPage: page,
+            limit,
             hasNext,
             hasPrev
-        }
+        }, 'Articles retrieved successfully');
     }
 
-    async getMyArticles(getArticlesDto: getArticlesDto, userId: string) {
+    async getMyArticles(getArticlesDto: getArticlesDto, userId: string): Promise<PaginatedResponse<Article>> {
         const user = await this.userModel.findById(userId);
         if (!user) throw new NotFoundException('User not found');
 
@@ -92,18 +90,17 @@ export class ArticlesService {
         const hasNext = page < totalPages;
         const hasPrev = page > 1;
 
-        return {
-            status:'success',
-            message: 'artilces retireved succussfully',
-            data: articles,
-            total,
-            totalPages,
+        return ResponseUtil.paginated(articles, {
+            total, 
+            totalPages, 
+            currentPage: page,
+            limit,
             hasNext,
             hasPrev
-        }                            
+        })                         
     }
 
-    async getArticleById(id: string) {
+    async getArticleById(id: string): Promise<SuccessResponse<Article>> {
         const article = await this.articleModel
                                     .findById(id)
                                     .populate('author', 'email fullname')
@@ -112,18 +109,14 @@ export class ArticlesService {
 
         if (!article) throw new NotFoundException(`Article with id ${id} not found`);
 
-        return { 
-            status: 'success',
-            message: 'article retrieved successfully',
-            data: article
-        }
+        return ResponseUtil.success(article, 'Article retrieved successfully.')
     }
 
     async updateArticle(
         updateArticleDto: updateArticleDto,
         articleId: string,
         userId: string
-    ) {
+    ): Promise<SuccessResponse<Article>> {
         const article = await this.articleModel
                                     .findById(articleId)
                                     .populate('author')
@@ -144,14 +137,11 @@ export class ArticlesService {
                                         .populate('author', 'fullname email')
                                         .select('-__v')
                                         .exec();
-        return {
-            status: 'success',
-            message: 'article updated successfully',
-            data: updatedArticle
-        }
+
+        return ResponseUtil.success(updatedArticle!, 'Article updated successfully.')
     }
 
-    async deleteArticle(articleId: string, userId: string, role: string) {
+    async deleteArticle(articleId: string, userId: string, role: string): Promise<SuccessResponse<null>> {
         const article = await this.articleModel
                                     .findById(articleId)
                                     .populate('author')
@@ -168,9 +158,6 @@ export class ArticlesService {
                     .findByIdAndDelete(articleId)
                     .exec();
 
-        return {
-            status: 'success',
-            message: 'article deleted successfully',
-        }
+        return ResponseUtil.noContent('Article deleted successfully')
     }
 }

@@ -5,7 +5,7 @@ export type ArticleDocument = Article & Document;
 
 @Schema({ timestamps: true })
 export class Article {
-    @Prop({ required: true, index: true })
+    @Prop({ required: true, index: true, text: true })
     title: string;
 
     @Prop({ required: true })

@@ -36,7 +36,7 @@ export class ArticlesService {
 
         const query: any = { };
         if (authorId) query.author = authorId;
-        if (search) query.title = new RegExp(search, 'i');
+        if (search) query.$text = { $search: search };
 
         const articles = await this.articleModel
                                     .find(query)

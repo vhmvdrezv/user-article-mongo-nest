@@ -1,14 +1,19 @@
 import { Type } from "class-transformer";
-import { IsIn, IsInt, IsNotEmpty, IsOptional, Max, MaxLength, Min } from "class-validator";
+import { IsIn, IsInt, IsMongoId, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from "class-validator";
 
 export class getArticlesDto {
     @IsOptional()
     @IsNotEmpty()
+    @IsString()
     @MaxLength(30)
+    @Matches(/^[a-zA-Z0-9\s\-_.,!?'"()]+$/, { 
+        message: 'Search term contains invalid characters' 
+    })
     search?: string;
 
     @IsOptional()
-    @IsNotEmpty()
+    @IsString()
+    @IsMongoId({ message: 'Author ID must be a valid MongoDB ObjectId' })
     authorId?: string;
 
     @IsOptional()

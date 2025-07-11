@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -6,7 +6,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ArticlesModule } from './articles/articles.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
-import configuration from './articles/config/configuration';
+import configuration from './common/config/configuration';
+import { WinstonModule } from 'nest-winston';
+import { createLoggerConfig } from './common/config/logger.config';
+import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
 
 @Module({
   imports: [
@@ -21,6 +24,14 @@ import configuration from './articles/config/configuration';
         uri: configService.get<string>('database.url'),
       }),
       inject: [ConfigService]
+    }),
+    WinstonModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const nodeEnv = configService.get('server.nodeEnv') || 'development';
+        return createLoggerConfig(nodeEnv);
+      },
     }),
     UsersModule,
     AuthModule,
@@ -51,4 +62,10 @@ import configuration from './articles/config/configuration';
   ],
 }
 )
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestLoggerMiddleware)
+      .forRoutes('*'); // Apply to all routes
+  }
+}

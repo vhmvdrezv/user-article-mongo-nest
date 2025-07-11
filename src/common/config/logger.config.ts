@@ -9,19 +9,36 @@ export const createLoggerConfig = (nodeEnv: string) => {
     winston.format.errors({ stack: true }),
     winston.format.json(),
     winston.format.printf((info: any) => {
+      // Extract known fields and keep everything else as metadata
+      const {
+        timestamp,
+        level,
+        message,
+        context,
+        correlationId,
+        userId,
+        method,
+        url,
+        statusCode,
+        responseTime,
+        stack,
+        ...otherFields
+      } = info;
+
       return JSON.stringify({
-        timestamp: info.timestamp,
-        level: info.level,
-        message: info.message,
-        context: info.context || 'Application',
-        correlationId: info.correlationId,
-        userId: info.userId,
-        method: info.method,
-        url: info.url,
-        statusCode: info.statusCode,
-        responseTime: info.responseTime,
-        stack: info.stack,
-        ...info.metadata
+        timestamp,
+        level,
+        message,
+        context: context || 'Application',
+        correlationId,
+        userId,
+        method,
+        url,
+        statusCode,
+        responseTime,
+        stack,
+        // Include all other fields (like ip, userAgent, etc.)
+        ...otherFields
       });
     })
   );
@@ -41,28 +58,20 @@ export const createLoggerConfig = (nodeEnv: string) => {
     );
   }
 
-  // Always log to files
   transports.push(
-    // All logs
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-      format: logFormat,
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
     // Error logs separately
     new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error',
       format: logFormat,
-      maxsize: 5242880, // 5MB
+      maxsize: 5242880,
       maxFiles: 5,
     })
   );
 
-  return WinstonModule.createLogger({
+  return {
     level: nodeEnv === 'production' ? 'info' : 'debug',
     format: logFormat,
     transports,
-  });
+  };
 };

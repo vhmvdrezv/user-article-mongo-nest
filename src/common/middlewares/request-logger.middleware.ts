@@ -28,7 +28,7 @@ export class RequestLoggerMiddleware implements NestMiddleware {
     this.logger.info('Incoming request', {
       correlationId,
       method: req.method,
-      url: req.url,
+      url: req.originalUrl,
       userAgent: req.get('User-Agent'),
       ip: req.ip,
       context: 'RequestLogger'

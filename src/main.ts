@@ -39,7 +39,7 @@ async function bootstrap() {
     })
   );
 
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalFilters(app.get(GlobalExceptionFilter));
 
   await app.listen(port || 3000);
 }

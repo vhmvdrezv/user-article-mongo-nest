@@ -6,13 +6,17 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { MongoError } from 'mongodb';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(GlobalExceptionFilter.name);
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -161,15 +165,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     exception: unknown,
     errorResponse: { statusCode: number; message: string; stack?: string }
   ): void {
-    const { statusCode, message } = errorResponse;
+    const { statusCode, message, stack } = errorResponse;
     const { method, url } = request;
-    
+
     const logMessage = `${method} ${url} - ${statusCode} - ${message}`;
-    
+
     if (statusCode >= 500) {
-      this.logger.error(logMessage, exception instanceof Error ? exception.stack : 'Unknown error');
+      this.logger.error(logMessage, {
+        stack: stack || (exception instanceof Error ? exception.stack : undefined),
+        context: 'GlobalExceptionFilter',
+      });
     } else {
-      this.logger.warn(logMessage);
+      this.logger.warn(logMessage, {
+        context: 'GlobalExceptionFilter',
+      });
     }
   }
 }

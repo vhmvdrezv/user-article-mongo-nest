@@ -10,6 +10,7 @@ import configuration from './common/config/configuration';
 import { WinstonModule } from 'nest-winston';
 import { createLoggerConfig } from './common/config/logger.config';
 import { RequestLoggerMiddleware } from './common/middlewares/request-logger.middleware';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 @Module({
   imports: [
@@ -58,14 +59,13 @@ import { RequestLoggerMiddleware } from './common/middlewares/request-logger.mid
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard
-    }
+    },
+    GlobalExceptionFilter,
   ],
 }
 )
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(RequestLoggerMiddleware)
-      .forRoutes('*'); // Apply to all routes
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
   }
 }
